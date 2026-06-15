@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enginie — College Chatbot</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* deep navy */
+      --card:#0b1220;
+      --muted:#9aa6b2;
+      --accent:#6EE7B7; /* mint */
+      --accent-2:#60A5FA; /* sky */
+      --bubble-user:#0ea5a6;
+      --bubble-bot:#15334f;
+      --glass: rgba(255,255,255,0.03);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071126 0%, #02101a 100%);color:#e6eef6}
+
+    .wrap{
+      max-width:920px;margin:36px auto;padding:20px;min-height:640px;
+      border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 10px 30px rgba(2,6,23,0.7);display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start;
+    }
+
+    /* Left panel - info/profile */
+    .panel{
+      background:var(--card);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;
+    }
+
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{
+      width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));font-weight:700;color:#05233a;font-size:20px
+    }
+    .title{font-size:18px;font-weight:600}
+    .subtitle{font-size:13px;color:var(--muted)}
+
+    .meta{background:var(--glass);padding:12px;border-radius:10px;color:var(--muted);font-size:13px}
+
+    .actions{display:flex;gap:8px}
+    .tiny-btn{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);cursor:pointer}
+
+    /* Chat area */
+    .chat-card{background:transparent;border-radius:12px;padding:14px;display:flex;flex-direction:column;height:560px}
+    .chat-header{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+    .bot-avatar{width:46px;height:46px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(180deg,var(--accent-2),var(--accent));color:#042233;font-weight:700}
+    .bot-name{font-weight:700}
+    .bot-status{font-size:12px;color:var(--muted)}
+
+    .messages{flex:1;overflow:auto;padding:18px 10px;display:flex;flex-direction:column;gap:12px}
+
+    .msg{max-width:78%;padding:12px 14px;border-radius:12px;line-height:1.35}
+    .msg.bot{align-self:flex-start;background:linear-gradient(180deg,var(--bubble-bot), rgba(21,51,79,0.92));border:1px solid rgba(255,255,255,0.02);border-top-left-radius:4px}
+    .msg.user{align-self:flex-end;background:linear-gradient(180deg,var(--bubble-user), #0aa39c);color:#012; border-top-right-radius:4px}
+    .meta-line{font-size:12px;color:var(--muted);margin-top:6px}
+
+    .composer{display:flex;gap:8px;padding:12px;margin-top:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border-radius:12px;align-items:center}
+    textarea#query{flex:1;resize:none;border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:14px;height:56px}
+    button#send{padding:12px 16px;border-radius:10px;border:none;background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#042233;font-weight:700;cursor:pointer}
+    button#send:active{transform:translateY(1px)}
+
+    /* helper */
+    .hint{font-size:13px;color:var(--muted);text-align:center;margin-top:6px}
+
+    @media (max-width:880px){
+      .wrap{grid-template-columns:1fr;padding:12px}
+      .panel{order:2}
+      .chat-card{order:1}
+      .chat-card{height:640px}
+    }
+
+    /* subtle incoming animation */
+    .msg{opacity:0;transform:translateY(6px);animation:fadeIn 260ms ease forwards}
+    @keyframes fadeIn{to{opacity:1;transform:none}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <aside class="panel" aria-label="About Enginie">
+      <div class="brand">
+        <div class="logo">E</div>
+        <div>
+          <div class="title">Enginie — College Chatbot</div>
+          <div class="subtitle">Fast answers for students, teachers, and parents</div>
+        </div>
+      </div>
+
+      <div class="meta">
+        Enginie helps you get college information, schedules, results and administrative answers — all in natural language.
+      </div>
+
+      <div class="meta">Features:
+        <ul style="margin:8px 0 0 18px;padding:0;color:var(--muted)">
+          <li>Secure login & personalized sessions</li>
+          <li>Query chat with instant replies</li>
+          <li>Feedback collection for continuous improvement</li>
+        </ul>
+      </div>
+
+      <div class="actions">
+        <button class="tiny-btn" id="clear">Clear Chat</button>
+        <button class="tiny-btn" id="sample">Sample Question</button>
+      </div>
+
+      <div style="flex:1"></div>
+      <div style="font-size:12px;color:var(--muted)">Design tip: Keep queries concise. Press <kbd>Enter</kbd> to send.</div>
+    </aside>
+
+    <main class="chat-card" role="main">
+      <header class="chat-header">
+        <div class="bot-avatar">E</div>
+        <div>
+          <div class="bot-name">enginie</div>
+          <div class="bot-status">Online — Ready to help</div>
+        </div>
+      </header>
+
+      <div id="messages" class="messages" aria-live="polite" aria-atomic="false">
+        <div class="msg bot">
+          <div>Hi — I'm <strong>enginie</strong>. Ask me anything about college schedules, results, events, or administration.</div>
+          <div class="meta-line">Tip: Try "When is the next exam?" or "Show my timetable"</div>
+        </div>
+      </div>
+
+      <div class="composer" role="region" aria-label="Chat composer">
+        <textarea id="query" placeholder="Type your question here..." aria-label="Chat input"></textarea>
+        <button id="send" aria-label="Send message">Send</button>
+      </div>
+
+      <div class="hint">Your conversation is private to your account.</div>
+    </main>
+  </div>
+
+  <script>
+const messagesEl = document.getElementById('messages');
+const input = document.getElementById('query');
+const sendBtn = document.getElementById('send');
+
+function appendMessage(text, who='bot'){
+  const div = document.createElement('div');
+  div.className = 'msg ' + (who==='user' ? 'user' : 'bot');
+  div.innerHTML = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+async function send(){
+  const text = input.value.trim();
+  if(!text) return;
+  appendMessage(`<strong>You:</strong> ${text}`, 'user');
+  input.value = '';
+
+  // Show temporary "thinking" message
+  const thinking = document.createElement('div');
+  thinking.className = 'msg bot';
+  thinking.innerHTML = '<em>Enginie is thinking...</em>';
+  messagesEl.appendChild(thinking);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  try {
+    const response = await fetch("http://127.0.0.1:5000/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: text })
+    });
+
+    const data = await response.json();
+    thinking.remove();
+
+    // Format response nicely
+    const formatted = `
+      <strong>Title:</strong> ${data.title || "N/A"}<br>
+      <strong>Answer:</strong> ${data.answer || "No response"}<br>
+      <strong>Reference URL(s):</strong><br>
+      ${data.reference_url ? data.reference_url.split('\\n').map(u => `<a href='${u}' target='_blank'>${u}</a>`).join('<br>') : 'N/A'}
+    `;
+
+    appendMessage(formatted, 'bot');
+  } catch (err) {
+    thinking.remove();
+    appendMessage("Error: Could not connect to Enginie backend.", 'bot');
+  }
+}
+
+sendBtn.addEventListener('click', send);
+input.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    send();
+  }
+});
+</script>
+</body>
+</html>
